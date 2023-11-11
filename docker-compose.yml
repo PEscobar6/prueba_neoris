@@ -1,0 +1,43 @@
+version: '3'
+
+services:
+  myDB:
+    image: postgres:15.3
+    container_name: test-database
+    restart: always
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_USER=test
+      - POSTGRES_PASSWORD=123456
+      - POSTGRES_DB=test-db
+    volumes:
+      - ./sql/postgres:/var/lib/postgresql/data
+  
+  pdAdmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin4
+    restart: always
+    depends_on:
+      - myDB
+    ports:
+      - 8081:80
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=test@google.com
+      - PGADMIN_DEFAULT_PASSWORD=123456
+    volumes:
+      - ./sql/pgadmin:/var/lib/pgadmin
+      - ./sql/pgadmin:/certs/server.cert
+      - ./sql/pgadmin:/certs/server.key
+      - ./sql/pgadmin:/pgadmin4/servers.json
+
+  # myApp:
+  #   build:
+  #     context: ./app
+  #     dockerfile: Dockerfile
+  #   container_name: my-app
+  #   restart: always
+  #   ports:
+  #     - 8081:8080
+  #   depends_on:
+  #     - myDB
