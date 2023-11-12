@@ -35,7 +35,7 @@ public class AccountService {
     }
 
     public Account editAccount(Account account){
-        if (account.getAccount_id() != null && iAccountRepository.existsById(account.getAccount_id())){
+        if (account.getCuenta_id() != null && iAccountRepository.existsById(account.getCuenta_id())){
             return iAccountRepository.save(account);
         }
         return account;
