@@ -1,6 +1,7 @@
 package com.neoris.app_transactions.controller;
 
 import com.neoris.app_transactions.model.Transaction;
+import com.neoris.app_transactions.model.TransactionDTO;
 import com.neoris.app_transactions.service.TransactionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -8,6 +9,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Optional;
 
 @RestController
@@ -22,10 +24,10 @@ public class TransactionController {
     }
 
     @GetMapping
-    public ResponseEntity<Page<Transaction>> getAllTransactions(
+    public ResponseEntity<List<TransactionDTO>> getAllTransactions(
             @RequestParam(required = false, defaultValue = "0") Integer page,
             @RequestParam(required = false, defaultValue = "10") Integer size,
-            @RequestParam(required = false, defaultValue = "false") Boolean enablePagination ){
+            @RequestParam(required = false, defaultValue = "false") Boolean enablePagination ) throws Exception {
         return ResponseEntity.ok(transactionService.getAllTransaction(page, size, enablePagination));
     }
 

@@ -1,8 +1,11 @@
 package com.neoris.app_transactions.service;
 
+import com.neoris.app_transactions.exception.CuentaNoEncontradaException;
 import com.neoris.app_transactions.exception.SaldoNoDisponibleException;
 import com.neoris.app_transactions.model.Account;
+import com.neoris.app_transactions.model.AccountStatementDTO;
 import com.neoris.app_transactions.model.Transaction;
+import com.neoris.app_transactions.model.TransactionDTO;
 import com.neoris.app_transactions.repository.IAccountRepository;
 import com.neoris.app_transactions.repository.ITransactionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +17,7 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -29,7 +33,7 @@ public class TransactionService {
         if (transaction == null) {
             throw new IllegalArgumentException("El movimiento no pudo ser creado.");
         }
-        transaction.setFecha(LocalDateTime.now());
+        transaction.setFecha(LocalDate.now());
 
         Optional<Account> optionalAccount = iAccountRepository.findById(transaction.getAccount_id());
         if (optionalAccount.isPresent()) {
@@ -56,8 +60,23 @@ public class TransactionService {
         }
     }
 
-    public Page<Transaction> getAllTransaction(Integer page, Integer size, Boolean enablePagination ){
-        return iTransactionRepository.findAll(enablePagination ? PageRequest.of(page, size) : Pageable.unpaged());
+    public List<TransactionDTO> getAllTransaction(Integer page, Integer size, Boolean enablePagination ) throws Exception {
+        Page<Transaction> transactions = iTransactionRepository.findAll(enablePagination ? PageRequest.of(page, size) : Pageable.unpaged());
+
+        if (!transactions.getContent().isEmpty()) {
+            List<TransactionDTO> transactionDTOS = new ArrayList<>();
+
+            for (Transaction transaction : transactions) {
+                Optional<Account> account = iAccountRepository.findById(transaction.getAccount_id());
+                TransactionDTO transactionDTO = new TransactionDTO(account.get(), transaction);
+                transactionDTOS.add(transactionDTO);
+            }
+
+            return transactionDTOS;
+        } else {
+            // Manejar el caso en el que no se encuentren cuentas asociadas al cliente
+            throw new Exception("No se encontraron transacciones");
+        }
     }
 
     public Optional<Transaction> findById(Long id ){
@@ -87,15 +106,17 @@ public class TransactionService {
         return iTransactionRepository.calculateValorByAccountId(accountId);
     }
 
-    public List<Transaction> getAccountTransactions(Long accountId, LocalDate startDate, LocalDate endDate) {
+    public List<Transaction> getAccountTransactions(String numeroCuenta, LocalDate startDate, LocalDate endDate) {
         // Implementación para obtener transacciones de una cuenta en un rango de fechas
         // Utiliza iTransactionRepository u otro método según tu lógica
+        Long accountId = iAccountRepository.findAccountIdByNumeroCuenta(numeroCuenta);
         return iTransactionRepository.findByAccount_IdAndFechaBetween(accountId, startDate, endDate);
     }
 
-    public BigDecimal calculateAccountBalance(Long accountId, LocalDate startDate) {
+    public BigDecimal calculateAccountBalance(String numeroCuenta, LocalDate startDate) {
         // Implementación para calcular el saldo de una cuenta hasta una fecha específica
         // Utiliza iTransactionRepository u otro método según tu lógica
+        Long accountId = iAccountRepository.findAccountIdByNumeroCuenta(numeroCuenta);
         return iTransactionRepository.calculateAccountBalance(accountId, startDate);
     }
 }

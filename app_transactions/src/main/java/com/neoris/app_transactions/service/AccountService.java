@@ -12,8 +12,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -41,6 +41,10 @@ public class AccountService {
         return iAccountRepository.findById(id);
     }
 
+    public Account findByNumeroCuenta( String numeroCuenta ){
+        return iAccountRepository.findAccountByNumeroCuenta(numeroCuenta);
+    }
+
     public void deleteAccount( Long id ){
         iAccountRepository.deleteById(id);
     }
@@ -56,24 +60,26 @@ public class AccountService {
         return iAccountRepository.existsById(id);
     }
 
-    public AccountStatementDTO generateAccountStatementReport(Long clienteId, LocalDate fechaInicio, LocalDate fechaFin) {
-        // Obtener la cuenta asociada al cliente
-        Optional<Account> optionalAccount = iAccountRepository.findByClientId(clienteId);
+    public List<AccountStatementDTO> generateAccountStatementReport(Long clienteId, LocalDate fechaInicio, LocalDate fechaFin) {
+        // Obtener la lista de cuentas asociadas al cliente
+        List<Account> accounts = iAccountRepository.findAccountsByClientId(clienteId);
 
-        if (optionalAccount.isPresent()) {
-            Account account = optionalAccount.get();
+        if (!accounts.isEmpty()) {
+            List<AccountStatementDTO> accountStatements = new ArrayList<>();
 
-            // Obtener transacciones de la cuenta en el rango de fechas especificado
-            List<Transaction> transactions = iTransactionRepository.findByAccount_IdAndFechaBetween(account.getCuenta_id(), fechaInicio, fechaFin);
+            for (Account account : accounts) {
+                // Obtener transacciones de la cuenta en el rango de fechas especificado
+                List<Transaction> transactions = iTransactionRepository.findByAccount_IdAndFechaBetween(account.getCuenta_id(), fechaInicio, fechaFin);
 
-            // Calcular el saldo de la cuenta hasta la fecha de fin
-            BigDecimal accountBalance = iTransactionRepository.calculateAccountBalance(account.getCuenta_id(), fechaFin);
 
-            // Crear y retornar el DTO del estado de cuenta
-            return new AccountStatementDTO(account, transactions, accountBalance);
+                AccountStatementDTO accountStatementDTO = new AccountStatementDTO(account, transactions);
+                accountStatements.add(accountStatementDTO);
+            }
+
+            return accountStatements;
         } else {
-            // Manejar el caso en el que no se encuentre la cuenta asociada al cliente
-            throw new CuentaNoEncontradaException("No se encontró la cuenta asociada al cliente con ID: " + clienteId);
+            // Manejar el caso en el que no se encuentren cuentas asociadas al cliente
+            throw new CuentaNoEncontradaException("No se encontraron cuentas asociadas al cliente con ID: " + clienteId);
         }
     }
 }
