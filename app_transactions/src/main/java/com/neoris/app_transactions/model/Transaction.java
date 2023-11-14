@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.Data;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.Date;
 
 @Data
@@ -13,8 +14,9 @@ public class Transaction {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long movimiento_id;
-    private Date fecha;
+    private LocalDateTime fecha;
     private String tipoMovimiento;
     private BigDecimal valor;
     private BigDecimal saldo;
+    private Long account_id;
 }
